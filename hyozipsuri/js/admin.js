@@ -90,9 +90,13 @@ function previewText(value) {
   return text.length > 180 ? `${text.slice(0, 180)}…` : text;
 }
 
-function fitTextarea(el) {
+function fitTextarea(el, min = 48) {
   el.style.height = "auto";
-  el.style.height = `${Math.max(48, el.scrollHeight)}px`;
+  el.style.height = `${Math.max(min, el.scrollHeight)}px`;
+}
+
+function fitTitle() {
+  if (noticeForm.title) fitTextarea(noticeForm.title, 72);
 }
 
 function renderNoticeBlocks() {
@@ -178,6 +182,7 @@ function fillNotice(item) {
   noticeBlocks = parseBlocks(item.body);
   noticeFormHeading.textContent = "글 수정";
   renderNoticeBlocks();
+  fitTitle();
 }
 
 function resetNotice() {
@@ -188,6 +193,7 @@ function resetNotice() {
   noticeBlocks = [{ id: newBlockId(), type: "text", value: "" }];
   noticeFormHeading.textContent = "새 글 작성";
   renderNoticeBlocks();
+  fitTitle();
 }
 
 function moveBlock(index, dir) {
@@ -300,6 +306,8 @@ document.querySelectorAll(".tab").forEach((tab) => {
     });
   });
 });
+
+noticeForm.title.addEventListener("input", fitTitle);
 
 noticeBlocksEl.addEventListener("input", (event) => {
   const area = event.target.closest(".block-text");

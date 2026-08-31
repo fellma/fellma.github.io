@@ -46,11 +46,11 @@
           <label>날짜 <input type="date" name="date" required /></label>
           <div class="editor-head">
             <strong>휴대폰에서 보이는 그대로 수정</strong>
-            <p class="hint">아래 칸은 홈 화면과 같은 너비·가운데 정렬입니다. 문장이 길면 엔터로 줄을 나누세요. 나눈 위치가 홈과 같습니다.</p>
+            <p class="hint">제목과 본문 모두 엔터로 줄을 나누면 홈과 같습니다. 아래 칸은 홈 화면과 같은 너비·가운데 정렬입니다.</p>
           </div>
           <div class="phone-stage">
             <div class="phone-frame">
-              <input class="title-as-page" name="title" required maxlength="120" placeholder="글 제목" />
+              <textarea class="title-as-page" name="title" required maxlength="160" rows="2" placeholder="글 제목"></textarea>
               <div class="notice-panel-edit">
                 <div id="noticeBlocks" class="notice-blocks"></div>
               </div>
