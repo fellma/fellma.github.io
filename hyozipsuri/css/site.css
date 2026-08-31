@@ -40,7 +40,7 @@ body {
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   padding: 14px 18px;
   padding-top: max(14px, env(safe-area-inset-top));
@@ -561,6 +561,10 @@ body {
   margin-top: 12px;
   color: #9a8b7e;
   font-size: 0.85rem;
+}
+
+.admin-link[hidden] {
+  display: none !important;
 }
 
 @media (min-width: 760px) {

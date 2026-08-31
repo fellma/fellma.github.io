@@ -78,6 +78,23 @@ function renderNotices(notices) {
     .join("");
 }
 
+function mobileBlogUrl(url) {
+  const raw = String(url || "https://m.blog.naver.com/tmfhomerepair").trim();
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === "blog.naver.com" || parsed.hostname === "m.blog.naver.com") {
+      parsed.hostname = "m.blog.naver.com";
+      return parsed.toString();
+    }
+  } catch (_err) {}
+  return raw;
+}
+
+function isLocalAdminHost() {
+  const host = location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+}
+
 function applyCard(settings) {
   document.title = `${settings.companyName} · ${settings.ownerName || ""}`.trim();
   document.getElementById("brandName").textContent = settings.companyName;
@@ -92,7 +109,7 @@ function applyCard(settings) {
   document.getElementById("cardIntro").textContent = settings.cardIntro || "";
   document.getElementById("blogCta").textContent = settings.blogCta || "시공 이미지를 보고 싶으시다면?";
   const blogBtn = document.getElementById("blogBtn");
-  blogBtn.href = settings.blogUrl || "https://blog.naver.com/tmfhomerepair";
+  blogBtn.href = mobileBlogUrl(settings.blogUrl || "https://m.blog.naver.com/tmfhomerepair");
   const photo = assetUrl(settings.photo || "images/character-face.jpg");
   const img = document.getElementById("cardPhoto");
   img.src = photo;
@@ -131,8 +148,8 @@ async function load() {
   const { data, staticPage } = await loadSite();
   applyCard(data.settings);
   renderNotices(data.notices || []);
-  const adminLink = document.querySelector(".admin-link");
-  if (adminLink && staticPage) adminLink.hidden = true;
+  const adminLink = document.getElementById("adminLink");
+  if (adminLink) adminLink.hidden = !isLocalAdminHost();
 }
 
 load().catch(() => {
