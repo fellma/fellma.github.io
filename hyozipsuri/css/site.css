@@ -559,6 +559,7 @@ body {
 .admin-link {
   display: inline-block;
   margin-top: 12px;
+  padding: 10px 14px;
   color: #9a8b7e;
   font-size: 0.85rem;
 }

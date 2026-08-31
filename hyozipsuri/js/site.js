@@ -90,11 +90,6 @@ function mobileBlogUrl(url) {
   return raw;
 }
 
-function isLocalAdminHost() {
-  const host = location.hostname;
-  return host === "localhost" || host === "127.0.0.1";
-}
-
 function applyCard(settings) {
   document.title = `${settings.companyName} · ${settings.ownerName || ""}`.trim();
   document.getElementById("brandName").textContent = settings.companyName;
@@ -148,8 +143,6 @@ async function load() {
   const { data, staticPage } = await loadSite();
   applyCard(data.settings);
   renderNotices(data.notices || []);
-  const adminLink = document.getElementById("adminLink");
-  if (adminLink) adminLink.hidden = !isLocalAdminHost();
 }
 
 load().catch(() => {
