@@ -161,6 +161,13 @@ body {
   color: var(--wood-dark);
 }
 
+.biz-area {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
 .biz-intro {
   margin: 0;
   padding: 14px 14px 16px;

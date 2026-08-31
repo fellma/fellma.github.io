@@ -177,10 +177,7 @@ function fillSettings() {
   settingsForm.cardTagline.value = s.cardTagline || "";
   settingsForm.cardIntro.value = s.cardIntro || "";
   settingsForm.phone.value = s.phone || "";
-  settingsForm.hours.value = s.hours || "";
   settingsForm.area.value = s.area || "";
-  settingsForm.blogCta.value = s.blogCta || "";
-  settingsForm.blogUrl.value = s.blogUrl || "";
 }
 
 function fillNotice(item) {
@@ -527,10 +524,7 @@ settingsForm.addEventListener("submit", async (event) => {
   data.append("cardTagline", settingsForm.cardTagline.value);
   data.append("cardIntro", settingsForm.cardIntro.value);
   data.append("phone", settingsForm.phone.value);
-  data.append("hours", settingsForm.hours.value);
   data.append("area", settingsForm.area.value);
-  data.append("blogCta", settingsForm.blogCta.value);
-  data.append("blogUrl", settingsForm.blogUrl.value);
   if (settingsForm.photo.files[0]) data.append("photo", settingsForm.photo.files[0]);
   const saved = await api("/api/settings", { method: "PUT", body: data });
   await refresh();

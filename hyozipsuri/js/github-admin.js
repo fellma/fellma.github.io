@@ -292,10 +292,10 @@ window.HyoRemote = (function () {
         cardTagline: String(formValue(body, "cardTagline") ?? site.settings.cardTagline ?? "").trim(),
         cardIntro: String(formValue(body, "cardIntro") ?? site.settings.cardIntro ?? "").trim(),
         phone: String(formValue(body, "phone") || "").trim(),
-        hours: String(formValue(body, "hours") || "").trim(),
         area: String(formValue(body, "area") || "").trim(),
-        blogUrl: String(formValue(body, "blogUrl") ?? site.settings.blogUrl ?? "").trim(),
-        blogCta: String(formValue(body, "blogCta") ?? site.settings.blogCta ?? "").trim(),
+        hours: formValue(body, "hours") == null ? site.settings.hours || "" : String(formValue(body, "hours") || "").trim(),
+        blogUrl: formValue(body, "blogUrl") == null ? site.settings.blogUrl || "" : String(formValue(body, "blogUrl") || "").trim(),
+        blogCta: formValue(body, "blogCta") == null ? site.settings.blogCta || "" : String(formValue(body, "blogCta") || "").trim(),
       };
       site.settings = next;
       const photo = body instanceof FormData ? body.get("photo") : null;
