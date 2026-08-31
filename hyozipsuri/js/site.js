@@ -66,9 +66,7 @@ function renderNotices(notices) {
     .map(
       (item, index) => `
       <article class="notice" data-id="${escapeHtml(item.id)}">
-        <button type="button" class="notice-toggle" aria-expanded="false">
-          ${escapeHtml(item.title)}
-        </button>
+        <button type="button" class="notice-toggle" aria-expanded="false">${escapeHtml(item.title)}</button>
         <div class="notice-panel" id="notice-panel-${index}" hidden>
           <div class="notice-body">${renderRichBody(item.body)}</div>
           <button type="button" class="close-post">글닫기</button>
