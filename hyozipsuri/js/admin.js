@@ -70,6 +70,7 @@ function parseBlocks(body) {
 }
 
 function serializeNoticeBody() {
+  noticeBlocksEl.querySelectorAll(".block-text").forEach(syncBlockFromEditor);
   return noticeBlocks
     .map((block) => {
       if (block.type === "img") return `[[img:${block.src}]]`;
@@ -86,7 +87,9 @@ function collectImages(body) {
 }
 
 function previewText(value) {
-  const text = String(value || "").replace(/\[\[img:[^\]]+\]\]/g, "").replace(/\s+/g, " ").trim();
+  const text = window.HyoRich
+    ? HyoRich.strip(String(value || "").replace(/\[\[img:[^\]]+\]\]/g, ""))
+    : String(value || "").replace(/\[\[img:[^\]]+\]\]/g, "").replace(/\s+/g, " ").trim();
   return text.length > 180 ? `${text.slice(0, 180)}…` : text;
 }
 
@@ -97,6 +100,12 @@ function fitTextarea(el, min = 48) {
 
 function fitTitle() {
   if (noticeForm.title) fitTextarea(noticeForm.title, 72);
+}
+
+function syncBlockFromEditor(el) {
+  const index = Number(el.dataset.index);
+  if (!noticeBlocks[index] || noticeBlocks[index].type !== "text") return;
+  noticeBlocks[index].value = window.HyoRich ? HyoRich.fromEditable(el) : el.innerText;
 }
 
 function renderNoticeBlocks() {
@@ -115,9 +124,10 @@ function renderNoticeBlocks() {
             </div>
           </div>`;
       }
+      const html = window.HyoRich ? HyoRich.toHtml(block.value) : escapeHtml(block.value).replace(/\n/g, "<br>");
       return `
         <div class="edit-block" data-index="${index}">
-          <textarea class="block-text" data-index="${index}" placeholder="여기에 글을 쓰고, 긴 문장은 엔터로 줄을 나누세요.">${escapeHtml(block.value)}</textarea>
+          <div class="block-text" contenteditable="true" role="textbox" aria-multiline="true" data-index="${index}" data-placeholder="여기에 글을 쓰고, 긴 문장은 엔터로 줄을 나누세요.">${html}</div>
           <div class="block-tools">
             <button type="button" class="mini" data-img-after="${index}">이 아래에 사진</button>
             <button type="button" class="mini" data-text-after="${index}">이 아래에 글 칸</button>
@@ -128,7 +138,7 @@ function renderNoticeBlocks() {
         </div>`;
     })
     .join("");
-  noticeBlocksEl.querySelectorAll(".block-text").forEach(fitTextarea);
+  noticeBlocksEl.querySelectorAll(".block-text").forEach((el) => fitTextarea(el));
 }
 
 function renderNoticeAdmin() {
@@ -309,13 +319,98 @@ document.querySelectorAll(".tab").forEach((tab) => {
 
 noticeForm.title.addEventListener("input", fitTitle);
 
+let savedRange = null;
+
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const node = sel.anchorNode;
+  const el = node && (node.nodeType === 1 ? node : node.parentElement);
+  const editor = el && el.closest && el.closest(".block-text");
+  if (editor && noticeBlocksEl.contains(editor)) {
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+});
+
+function restoreSelection() {
+  if (!savedRange) return false;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(savedRange);
+  const editor = savedRange.startContainer.nodeType === 1
+    ? savedRange.startContainer
+    : savedRange.startContainer.parentElement;
+  const block = editor && editor.closest && editor.closest(".block-text");
+  if (block) block.focus();
+  return true;
+}
+
+function applyFormat(cmd, value) {
+  restoreSelection();
+  const sel = window.getSelection();
+  if (!sel.rangeCount || sel.isCollapsed) {
+    alert("먼저 글자를 드래그해서 선택해 주세요.");
+    return;
+  }
+  try {
+    document.execCommand("styleWithCSS", false, true);
+  } catch (_err) {}
+  const ok = document.execCommand(cmd, false, value);
+  if (!ok && cmd === "hiliteColor") document.execCommand("backColor", false, value);
+  const editor = document.activeElement && document.activeElement.closest
+    ? document.activeElement.closest(".block-text")
+    : noticeBlocksEl.querySelector(".block-text");
+  if (editor) {
+    syncBlockFromEditor(editor);
+    fitTextarea(editor);
+    savedRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : savedRange;
+  }
+}
+
+const formatBar = document.getElementById("formatBar");
+if (formatBar) {
+  formatBar.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("button")) event.preventDefault();
+  });
+  formatBar.addEventListener("click", (event) => {
+    const swatch = event.target.closest("[data-color]");
+    const btn = event.target.closest("[data-fmt]");
+    if (swatch) {
+      applyFormat("foreColor", swatch.dataset.color);
+      return;
+    }
+    if (!btn) return;
+    const fmt = btn.dataset.fmt;
+    if (fmt === "bold") applyFormat("bold");
+    if (fmt === "underline") applyFormat("underline");
+    if (fmt === "highlight") applyFormat("hiliteColor", window.HyoRich ? HyoRich.HIGHLIGHT : "#fff3a3");
+    if (fmt === "remove") applyFormat("removeFormat");
+  });
+}
+
 noticeBlocksEl.addEventListener("input", (event) => {
   const area = event.target.closest(".block-text");
   if (!area) return;
-  const index = Number(area.dataset.index);
-  if (!noticeBlocks[index] || noticeBlocks[index].type !== "text") return;
-  noticeBlocks[index].value = area.value;
+  syncBlockFromEditor(area);
   fitTextarea(area);
+});
+
+noticeBlocksEl.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.shiftKey) return;
+  const area = event.target.closest(".block-text");
+  if (!area) return;
+  event.preventDefault();
+  if (!document.execCommand("insertLineBreak")) {
+    document.execCommand("insertHTML", false, "<br>");
+  }
+});
+
+noticeBlocksEl.addEventListener("paste", (event) => {
+  const area = event.target.closest(".block-text");
+  if (!area) return;
+  event.preventDefault();
+  const text = (event.clipboardData || window.clipboardData).getData("text/plain");
+  document.execCommand("insertText", false, text);
 });
 
 noticeBlocksEl.addEventListener("click", (event) => {

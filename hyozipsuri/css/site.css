@@ -362,6 +362,27 @@ body {
   font-size: 0.98rem;
 }
 
+.notice-body b,
+.notice-body strong {
+  font-weight: 800;
+}
+
+.notice-body i,
+.notice-body em {
+  font-style: italic;
+}
+
+.notice-body u {
+  text-underline-offset: 2px;
+}
+
+.notice-body mark {
+  background: #fff3a3;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 3px;
+}
+
 .notice-img {
   display: block;
   width: auto;

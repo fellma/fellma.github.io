@@ -162,24 +162,99 @@ textarea {
   width: 100%;
   min-height: 48px;
   margin: 0 auto 12px;
-  padding: 0;
+  padding: 4px 2px;
   border: 1px dashed transparent;
   border-radius: 8px;
   background: transparent;
   text-align: center;
   white-space: pre-wrap;
   overflow: hidden;
-  resize: none;
   color: #3a312b;
   line-height: 1.8;
   font-size: 0.98rem;
   font-family: inherit;
   letter-spacing: -0.02em;
+  outline: none;
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .block-text:focus {
   border-color: rgba(61, 42, 28, 0.28);
   background: #fff;
+}
+
+.block-text:empty:before {
+  content: attr(data-placeholder);
+  color: #9a8b7e;
+}
+
+.block-text b,
+.block-text strong {
+  font-weight: 800;
+}
+
+.block-text i,
+.block-text em {
+  font-style: italic;
+}
+
+.block-text u {
+  text-underline-offset: 2px;
+}
+
+.block-text mark {
+  background: #fff3a3;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 3px;
+}
+
+.format-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 8px;
+  background: var(--paper);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+}
+
+.format-bar > button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.format-bar > button:active {
+  background: var(--cream);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(61, 42, 28, 0.18);
+  cursor: pointer;
 }
 
 .img-block {
@@ -399,7 +474,13 @@ textarea {
     padding: 0 10px;
   }
 
-  .tab {
+  .format-bar > button,
+  .swatch {
     min-height: 44px;
+  }
+
+  .swatch {
+    width: 32px;
+    min-width: 32px;
   }
 }

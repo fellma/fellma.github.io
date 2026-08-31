@@ -46,7 +46,21 @@
           <label>날짜 <input type="date" name="date" required /></label>
           <div class="editor-head">
             <strong>휴대폰에서 보이는 그대로 수정</strong>
-            <p class="hint">제목과 본문 모두 엔터로 줄을 나누면 홈과 같습니다. 아래 칸은 홈 화면과 같은 너비·가운데 정렬입니다.</p>
+            <p class="hint">글자를 드래그해서 선택한 다음, 아래 버튼으로 굵게·강조·색상을 넣을 수 있습니다. 제목과 본문은 엔터로 줄을 나눕니다.</p>
+          </div>
+          <div class="format-bar" id="formatBar">
+            <button type="button" data-fmt="bold" title="굵게"><b>가</b></button>
+            <button type="button" data-fmt="highlight" title="강조">강조</button>
+            <button type="button" data-fmt="underline" title="밑줄"><u>밑줄</u></button>
+            <button type="button" data-fmt="remove" title="서식 지우기">지우기</button>
+            <span class="swatches" aria-label="글자 색">
+              <button type="button" class="swatch" data-color="#1c1612" title="검정" style="background:#1c1612"></button>
+              <button type="button" class="swatch" data-color="#8b5e3c" title="갈색" style="background:#8b5e3c"></button>
+              <button type="button" class="swatch" data-color="#9b2c2c" title="빨강" style="background:#9b2c2c"></button>
+              <button type="button" class="swatch" data-color="#c45c26" title="주황" style="background:#c45c26"></button>
+              <button type="button" class="swatch" data-color="#2f6b3a" title="초록" style="background:#2f6b3a"></button>
+              <button type="button" class="swatch" data-color="#1d4e89" title="파랑" style="background:#1d4e89"></button>
+            </span>
           </div>
           <div class="phone-stage">
             <div class="phone-frame">
@@ -95,6 +109,7 @@
       </section>
     </div>
 
+    <script src="js/rich-text.js"></script>
     <script src="js/github-admin.js"></script>
     <script src="js/admin.js"></script>
   </body>

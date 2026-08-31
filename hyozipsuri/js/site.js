@@ -43,8 +43,8 @@ function renderRichBody(body) {
         if (!isSafeSrc(src)) return "";
         return `<img class="notice-img" src="${escapeHtml(assetUrl(src))}" alt="" />`;
       }
-      const text = escapeHtml(chunk).trim();
-      return text ? `<p>${text}</p>` : "";
+      const html = window.HyoRich ? HyoRich.toHtml(chunk) : escapeHtml(chunk).replace(/\n/g, "<br>");
+      return html.trim() ? `<p>${html}</p>` : "";
     })
     .join("");
 }
