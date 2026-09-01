@@ -178,6 +178,9 @@ function fillSettings() {
   settingsForm.cardIntro.value = s.cardIntro || "";
   settingsForm.phone.value = s.phone || "";
   settingsForm.area.value = s.area || "";
+  settingsForm.blogCta.value =
+    !s.blogCta || s.blogCta === "시공 이미지를 보고 싶으시다면?" ? "시공 사진이 보고 싶다면?" : s.blogCta;
+  settingsForm.blogUrl.value = s.blogUrl || "https://m.blog.naver.com/tmfhomerepair";
 }
 
 function fillNotice(item) {
@@ -525,6 +528,8 @@ settingsForm.addEventListener("submit", async (event) => {
   data.append("cardIntro", settingsForm.cardIntro.value);
   data.append("phone", settingsForm.phone.value);
   data.append("area", settingsForm.area.value);
+  data.append("blogCta", settingsForm.blogCta.value);
+  data.append("blogUrl", settingsForm.blogUrl.value);
   if (settingsForm.photo.files[0]) data.append("photo", settingsForm.photo.files[0]);
   const saved = await api("/api/settings", { method: "PUT", body: data });
   await refresh();

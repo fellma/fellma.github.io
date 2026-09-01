@@ -76,6 +76,18 @@ function renderNotices(notices) {
     .join("");
 }
 
+function mobileBlogUrl(url) {
+  const raw = String(url || "https://m.blog.naver.com/tmfhomerepair").trim();
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === "blog.naver.com" || parsed.hostname === "m.blog.naver.com") {
+      parsed.hostname = "m.blog.naver.com";
+      return parsed.toString();
+    }
+  } catch (_err) {}
+  return raw;
+}
+
 function applyCard(settings) {
   document.title = `${settings.companyName} · ${settings.ownerName || ""}`.trim();
   document.getElementById("brandName").textContent = settings.companyName;
@@ -87,6 +99,11 @@ function applyCard(settings) {
   document.getElementById("cardPhone").textContent = settings.phone || "";
   document.getElementById("cardArea").textContent = settings.area || "";
   document.getElementById("cardIntro").textContent = settings.cardIntro || "";
+  let cta = String(settings.blogCta || "").trim();
+  if (!cta || cta === "시공 이미지를 보고 싶으시다면?") cta = "시공 사진이 보고 싶다면?";
+  document.getElementById("blogCta").textContent = cta;
+  const blogBtn = document.getElementById("blogBtn");
+  blogBtn.href = mobileBlogUrl(settings.blogUrl || "https://m.blog.naver.com/tmfhomerepair");
   const photo = assetUrl(settings.photo || "images/character-face.jpg");
   const img = document.getElementById("cardPhoto");
   img.src = photo;
