@@ -319,7 +319,7 @@ function renderDeviceStatus() {
   box.innerHTML = owner
     ? `<p>이 노트북·휴대폰은 <b>방문자 수에서 빼고</b> 있습니다.</p>
        <button type="button" class="btn ghost" id="statsDeviceBtn">이 기기도 세기</button>
-       <p class="hint">휴대폰에서도 관리자에 한 번 들어가면, 그 휴대폰으로 연 접속은 빠집니다.</p>`
+       <p class="hint">휴대폰과 노트북에서 각각, 공개 홈페이지의 관리자에 한 번 들어가 주세요. 그래야 사장님 접속이 빠집니다.</p>`
     : `<p>이 기기로 홈페이지를 열면 방문자 수에 <b>포함</b>됩니다.</p>
        <button type="button" class="btn ghost" id="statsDeviceBtn">이 기기는 빼기</button>`;
   const btn = document.getElementById("statsDeviceBtn");
