@@ -147,3 +147,5 @@ async function load() {
 load().catch(() => {
   noticeList.innerHTML = `<p class="empty">내용을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</p>`;
 });
+
+if (window.HyoVisit) HyoVisit.ping();

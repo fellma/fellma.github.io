@@ -293,6 +293,7 @@ loginForm.addEventListener("submit", async (event) => {
       await refresh();
     } catch (_err) {}
     showApp(true);
+    markThisDeviceOwner();
   } catch (err) {
     loginError.textContent = err.message;
     loginError.hidden = false;
@@ -307,6 +308,89 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   showApp(false);
 });
 
+function markThisDeviceOwner() {
+  if (window.HyoVisit) HyoVisit.setOwner(true);
+}
+
+function renderDeviceStatus() {
+  const box = document.getElementById("statsDevice");
+  if (!box || !window.HyoVisit) return;
+  const owner = HyoVisit.isOwner();
+  box.innerHTML = owner
+    ? `<p>이 노트북·휴대폰은 <b>방문자 수에서 빼고</b> 있습니다.</p>
+       <button type="button" class="btn ghost" id="statsDeviceBtn">이 기기도 세기</button>
+       <p class="hint">휴대폰에서도 관리자에 한 번 들어가면, 그 휴대폰으로 연 접속은 빠집니다.</p>`
+    : `<p>이 기기로 홈페이지를 열면 방문자 수에 <b>포함</b>됩니다.</p>
+       <button type="button" class="btn ghost" id="statsDeviceBtn">이 기기는 빼기</button>`;
+  const btn = document.getElementById("statsDeviceBtn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      HyoVisit.setOwner(!owner);
+      renderDeviceStatus();
+    });
+  }
+}
+
+function renderWeek(week) {
+  const el = document.getElementById("statsWeek");
+  if (!el) return;
+  const max = Math.max(1, ...week.map((day) => day.count));
+  el.innerHTML = week
+    .map((day) => {
+      const h = Math.max(day.count ? 8 : 4, Math.round((day.count / max) * 72));
+      return `<div class="stats-day" title="${day.date}">
+        <b>${day.count}</b>
+        <i style="height:${h}px"></i>
+        <span>${day.label}</span>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderPaths(id, rows, emptyText) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!rows.length) {
+    el.innerHTML = `<p class="stats-empty">${emptyText}</p>`;
+    return;
+  }
+  el.innerHTML = rows
+    .map(
+      (row) => `<div class="path-row">
+        <span class="path-name">${escapeHtml(row.label)}</span>
+        <span class="path-bar"><i style="width:${Math.max(row.pct, 4)}%"></i></span>
+        <span class="path-meta">${row.count.toLocaleString("ko-KR")} · ${row.pct}%</span>
+      </div>`
+    )
+    .join("");
+}
+
+async function loadStats() {
+  renderDeviceStatus();
+  const todayEl = document.getElementById("statsToday");
+  const yestEl = document.getElementById("statsYesterday");
+  const totalEl = document.getElementById("statsTotal");
+  if (!window.HyoVisit || !todayEl) return;
+  todayEl.textContent = "…";
+  yestEl.textContent = "…";
+  totalEl.textContent = "…";
+  try {
+    const data = await HyoVisit.loadDashboard();
+    todayEl.textContent = data.today.toLocaleString("ko-KR");
+    yestEl.textContent = data.yesterday.toLocaleString("ko-KR");
+    totalEl.textContent = data.total.toLocaleString("ko-KR");
+    renderWeek(data.week);
+    renderPaths("statsTodayPaths", data.todayPaths, "오늘은 아직 다른 사람이 들어오지 않았습니다.");
+    renderPaths("statsTotalPaths", data.totalPaths, "아직 집계된 방문이 없습니다.");
+  } catch (_err) {
+    todayEl.textContent = "-";
+    yestEl.textContent = "-";
+    totalEl.textContent = "-";
+    document.getElementById("statsTodayPaths").innerHTML =
+      `<p class="stats-empty">방문 숫자를 불러오지 못했습니다. 잠시 후 새로고침 해 주세요.</p>`;
+  }
+}
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((el) => el.classList.remove("is-on"));
@@ -314,7 +398,12 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.querySelectorAll(".panel").forEach((panel) => {
       panel.hidden = panel.id !== `panel-${tab.dataset.tab}`;
     });
+    if (tab.dataset.tab === "stats") loadStats();
   });
+});
+
+document.getElementById("statsRefresh").addEventListener("click", () => {
+  loadStats();
 });
 
 noticeForm.title.addEventListener("input", fitTitle);
@@ -547,6 +636,7 @@ async function boot() {
     if (me.admin) {
       await refresh();
       showApp(true);
+      markThisDeviceOwner();
     }
   } catch (_err) {}
 }

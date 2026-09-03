@@ -37,6 +37,7 @@
       <nav class="tabs" aria-label="관리 메뉴">
         <button type="button" class="tab is-on" data-tab="notice">알려드립니다</button>
         <button type="button" class="tab" data-tab="settings">명함</button>
+        <button type="button" class="tab" data-tab="stats">방문</button>
       </nav>
 
       <section id="panel-notice" class="panel">
@@ -106,9 +107,46 @@
           <p id="settingsOk" class="ok" hidden></p>
         </form>
       </section>
+
+      <section id="panel-stats" class="panel" hidden>
+        <h2>방문 통계</h2>
+        <p class="hint">홈페이지를 연 사람 수입니다. 사장님 노트북·휴대폰은 빼 둡니다.</p>
+        <div id="statsDevice" class="stats-device"></div>
+        <div class="stats-nums">
+          <div class="stats-num">
+            <span>오늘</span>
+            <b id="statsToday">0</b>
+          </div>
+          <div class="stats-num">
+            <span>어제</span>
+            <b id="statsYesterday">0</b>
+          </div>
+          <div class="stats-num">
+            <span>누적</span>
+            <b id="statsTotal">0</b>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-head">
+            <strong>최근 7일</strong>
+            <button type="button" id="statsRefresh" class="mini">새로고침</button>
+          </div>
+          <div id="statsWeek" class="stats-week"></div>
+        </div>
+        <div class="stats-card">
+          <strong>오늘 유입 경로</strong>
+          <p class="hint">네이버 블로그 관리처럼, 어디서 들어왔는지 보여 줍니다.</p>
+          <div id="statsTodayPaths" class="stats-paths"></div>
+        </div>
+        <div class="stats-card">
+          <strong>누적 유입 경로</strong>
+          <div id="statsTotalPaths" class="stats-paths"></div>
+        </div>
+      </section>
     </div>
 
     <script src="js/rich-text.js"></script>
+    <script src="js/visit-stats.js"></script>
     <script src="js/github-admin.js"></script>
     <script src="js/admin.js"></script>
   </body>
