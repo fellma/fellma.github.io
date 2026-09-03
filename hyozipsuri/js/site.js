@@ -88,6 +88,14 @@ function mobileBlogUrl(url) {
   return raw;
 }
 
+function displayBlogCta(raw) {
+  const cta = String(raw || "").trim();
+  if (!cta || cta === "시공 이미지를 보고 싶으시다면?" || cta === "시공 사진이 보고 싶다면?") {
+    return "더 많은 시공 사진이 보고 싶다면?";
+  }
+  return cta;
+}
+
 function applyCard(settings) {
   document.title = `${settings.companyName} · ${settings.ownerName || ""}`.trim();
   document.getElementById("brandName").textContent = settings.companyName;
@@ -99,9 +107,7 @@ function applyCard(settings) {
   document.getElementById("cardPhone").textContent = settings.phone || "";
   document.getElementById("cardArea").textContent = settings.area || "";
   document.getElementById("cardIntro").textContent = settings.cardIntro || "";
-  let cta = String(settings.blogCta || "").trim();
-  if (!cta || cta === "시공 이미지를 보고 싶으시다면?") cta = "시공 사진이 보고 싶다면?";
-  document.getElementById("blogCta").textContent = cta;
+  document.getElementById("blogCta").textContent = displayBlogCta(settings.blogCta);
   const blogBtn = document.getElementById("blogBtn");
   blogBtn.href = mobileBlogUrl(settings.blogUrl || "https://m.blog.naver.com/tmfhomerepair");
   const photo = assetUrl(settings.photo || "images/character-face.jpg");
@@ -110,6 +116,85 @@ function applyCard(settings) {
   img.alt = settings.ownerName || settings.companyName;
   document.getElementById("callBtn").href = telHref(settings.phone);
   document.getElementById("smsBtn").href = smsHref(settings.phone);
+}
+
+let worksIndex = 0;
+let worksItems = [];
+
+function drawWorks() {
+  const stage = document.getElementById("worksStage");
+  if (!stage || !worksItems.length) return;
+  const item = worksItems[worksIndex];
+  const total = worksItems.length;
+  stage.innerHTML = `
+    <div class="works-frame">
+      <img src="${escapeHtml(assetUrl(item.src))}" alt="시공 사진 ${worksIndex + 1}" />
+      ${
+        total > 1
+          ? `<button type="button" class="works-btn prev" data-works-step="-1" aria-label="이전 사진">‹</button>
+             <button type="button" class="works-btn next" data-works-step="1" aria-label="다음 사진">›</button>`
+          : ""
+      }
+    </div>
+    ${
+      total > 1
+        ? `<div class="works-dots">${worksItems
+            .map(
+              (_item, index) =>
+                `<button type="button" class="works-dot${index === worksIndex ? " is-on" : ""}" data-works-i="${index}" aria-label="${index + 1}번째 사진"></button>`
+            )
+            .join("")}</div>`
+        : ""
+    }`;
+}
+
+function stepWorks(dir) {
+  if (!worksItems.length) return;
+  worksIndex = (worksIndex + dir + worksItems.length) % worksItems.length;
+  drawWorks();
+}
+
+function renderWorks(items) {
+  const section = document.getElementById("works");
+  const stage = document.getElementById("worksStage");
+  if (!section || !stage) return;
+  worksItems = (items || []).filter((item) => item && isSafeSrc(item.src));
+  if (!worksItems.length) {
+    section.hidden = true;
+    stage.innerHTML = "";
+    return;
+  }
+  section.hidden = false;
+  worksIndex = Math.min(worksIndex, worksItems.length - 1);
+  drawWorks();
+}
+
+const worksSection = document.getElementById("works");
+if (worksSection) {
+  worksSection.addEventListener("click", (event) => {
+    const step = event.target.closest("[data-works-step]");
+    if (step) {
+      stepWorks(Number(step.dataset.worksStep));
+      return;
+    }
+    const dot = event.target.closest("[data-works-i]");
+    if (dot) {
+      worksIndex = Number(dot.dataset.worksI);
+      drawWorks();
+    }
+  });
+  let swipeX = null;
+  worksSection.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest(".works-frame")) return;
+    swipeX = event.clientX;
+  });
+  worksSection.addEventListener("pointerup", (event) => {
+    if (swipeX == null) return;
+    const delta = event.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(delta) < 40) return;
+    stepWorks(delta < 0 ? 1 : -1);
+  });
 }
 
 noticeList.addEventListener("click", (event) => {
@@ -142,6 +227,7 @@ async function load() {
   const { data, staticPage } = await loadSite();
   applyCard(data.settings);
   renderNotices(data.notices || []);
+  renderWorks(data.works || []);
 }
 
 load().catch(() => {

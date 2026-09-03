@@ -168,6 +168,24 @@ function renderNoticeAdmin() {
     .join("");
 }
 
+function renderWorksAdmin() {
+  const list = document.getElementById("worksAdminList");
+  if (!list) return;
+  const works = Array.isArray(site.works) ? site.works : [];
+  if (!works.length) {
+    list.innerHTML = `<p class="works-empty">아직 올린 시공 사진이 없습니다.</p>`;
+    return;
+  }
+  list.innerHTML = works
+    .map(
+      (item) => `<div class="works-admin-item">
+        <img src="${escapeHtml(assetUrl(item.src))}" alt="" />
+        <button type="button" class="mini danger" data-del-work="${escapeHtml(item.id)}">삭제</button>
+      </div>`
+    )
+    .join("");
+}
+
 function fillSettings() {
   const s = site.settings || {};
   settingsForm.cardHeadline.value = s.cardHeadline || "";
@@ -179,7 +197,11 @@ function fillSettings() {
   settingsForm.phone.value = s.phone || "";
   settingsForm.area.value = s.area || "";
   settingsForm.blogCta.value =
-    !s.blogCta || s.blogCta === "시공 이미지를 보고 싶으시다면?" ? "시공 사진이 보고 싶다면?" : s.blogCta;
+    !s.blogCta ||
+    s.blogCta === "시공 이미지를 보고 싶으시다면?" ||
+    s.blogCta === "시공 사진이 보고 싶다면?"
+      ? "더 많은 시공 사진이 보고 싶다면?"
+      : s.blogCta;
   settingsForm.blogUrl.value = s.blogUrl || "https://m.blog.naver.com/tmfhomerepair";
 }
 
@@ -274,6 +296,7 @@ async function refresh() {
   site = await api("/api/site");
   renderNoticeAdmin();
   fillSettings();
+  renderWorksAdmin();
   await refreshGithubHint();
 }
 
@@ -623,6 +646,45 @@ settingsForm.addEventListener("submit", async (event) => {
   const saved = await api("/api/settings", { method: "PUT", body: data });
   await refresh();
   showGithubResult(ok, saved.github, "명함을 저장했습니다.");
+});
+
+document.getElementById("worksAddBtn").addEventListener("click", () => {
+  document.getElementById("worksPicker").click();
+});
+
+document.getElementById("worksPicker").addEventListener("change", async (event) => {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  const ok = document.getElementById("worksOk");
+  ok.hidden = true;
+  if (!file) return;
+  const data = new FormData();
+  data.append("image", file);
+  try {
+    const saved = await api("/api/works", { method: "POST", body: data });
+    await refresh();
+    showGithubResult(ok, saved.github, "시공 사진을 올렸습니다.");
+  } catch (err) {
+    ok.hidden = false;
+    ok.className = "error";
+    ok.textContent = err.message || "사진을 올리지 못했습니다.";
+  }
+});
+
+document.getElementById("worksAdminList").addEventListener("click", async (event) => {
+  const id = event.target.dataset.delWork;
+  if (!id || !confirm("이 사진을 삭제할까요?")) return;
+  const ok = document.getElementById("worksOk");
+  ok.hidden = true;
+  try {
+    const deleted = await api(`/api/works/${id}`, { method: "DELETE" });
+    await refresh();
+    showGithubResult(ok, deleted.github, "시공 사진을 삭제했습니다.");
+  } catch (err) {
+    ok.hidden = false;
+    ok.className = "error";
+    ok.textContent = err.message || "삭제하지 못했습니다.";
+  }
 });
 
 resetNotice();

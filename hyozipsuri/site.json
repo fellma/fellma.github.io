@@ -11,7 +11,7 @@
     "photo": "/images/character-face.jpg",
     "cardHeadline": "고수가 왜 숨어요? 숨지 않아요. \n여러분의 친절한 셀인 친구",
     "blogUrl": "https://m.blog.naver.com/tmfhomerepair",
-    "blogCta": "시공 이미지를 보고 싶으시다면?"
+    "blogCta": "더 많은 시공 사진이 보고 싶다면?"
   },
   "notices": [
     {
@@ -35,5 +35,6 @@
       "date": "2026-04-08",
       "pinned": false
     }
-  ]
+  ],
+  "works": []
 }

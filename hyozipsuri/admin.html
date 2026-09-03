@@ -99,13 +99,22 @@
           <label>짧은 소개 <textarea name="cardIntro" rows="8" required></textarea></label>
           <label>전화번호 <input name="phone" placeholder="010-8204-0998" /></label>
           <label>시공 가능지역 <input name="area" placeholder="용인 · 수원 · 동탄" /></label>
-          <label>시공 사진 안내 문구 <input name="blogCta" placeholder="시공 사진이 보고 싶다면?" /></label>
+          <label>시공 사진 안내 문구 <input name="blogCta" placeholder="더 많은 시공 사진이 보고 싶다면?" /></label>
           <label>네이버 블로그 주소 <input name="blogUrl" placeholder="https://m.blog.naver.com/tmfhomerepair" /></label>
           <label>명함 사진 <input type="file" name="photo" accept="image/*" /></label>
           <p class="hint">새 사진을 올리면 지금 명함 사진이 바뀝니다. 고르지 않으면 그대로입니다.</p>
           <button type="submit" class="btn">명함 저장</button>
           <p id="settingsOk" class="ok" hidden></p>
         </form>
+
+        <h2>홈페이지 시공 사진</h2>
+        <div class="card-form">
+          <p class="hint">2~4장 정도 올리면, 블로그 버튼 위에 슬라이드로 보입니다. 최대 8장입니다.</p>
+          <div id="worksAdminList" class="works-admin-list"></div>
+          <input type="file" id="worksPicker" accept="image/*" hidden />
+          <button type="button" id="worksAddBtn" class="btn">사진 추가</button>
+          <p id="worksOk" class="ok" hidden></p>
+        </div>
       </section>
 
       <section id="panel-stats" class="panel" hidden>

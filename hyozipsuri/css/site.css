@@ -434,6 +434,80 @@ body {
   font-size: 0.75rem;
 }
 
+.works-show {
+  padding-top: 20px;
+  padding-bottom: 8px;
+}
+
+.works-label {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.works-frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  border-radius: 18px;
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 10px 28px rgba(28, 22, 18, 0.08);
+  touch-action: pan-y;
+}
+
+.works-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.works-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(61, 42, 28, 0.72);
+  color: #f8efe6;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.works-btn.prev {
+  left: 8px;
+}
+
+.works-btn.next {
+  right: 8px;
+}
+
+.works-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.works-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #d8c4ad;
+  cursor: pointer;
+}
+
+.works-dot.is-on {
+  background: var(--wood-dark);
+  transform: scale(1.2);
+}
+
 .blog-cta {
   text-align: center;
   padding-top: 12px;

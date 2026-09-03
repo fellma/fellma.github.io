@@ -133,6 +133,7 @@ window.HyoRemote = (function () {
     siteCache = await res.json();
     siteCache.settings = siteCache.settings || {};
     if (!Array.isArray(siteCache.notices)) siteCache.notices = [];
+    if (!Array.isArray(siteCache.works)) siteCache.works = [];
     return siteCache;
   }
 
@@ -304,6 +305,30 @@ window.HyoRemote = (function () {
       }
       await saveSite(site, "효성집수리 명함 수정");
       return { ...site.settings, github: { ok: true, siteUrl: SITE_URL } };
+    }
+
+    const worksMatch = url.match(/^\/api\/works(?:\/([^/?]+))?$/);
+    if (worksMatch) {
+      requireToken();
+      const site = await loadSite();
+      if (!Array.isArray(site.works)) site.works = [];
+      const id = worksMatch[1];
+      if (method === "POST") {
+        const file = body instanceof FormData ? body.get("image") : null;
+        if (!file || !file.size) throw new Error("사진을 올려 주세요.");
+        if (site.works.length >= 8) throw new Error("시공 사진은 최대 8장까지 올릴 수 있습니다.");
+        const item = { id: newId("w"), src: await uploadOne(file) };
+        site.works.push(item);
+        await saveSite(site, "효성집수리 시공 사진 추가");
+        return { ...item, github: { ok: true, siteUrl: SITE_URL } };
+      }
+      if (method === "DELETE" && id) {
+        const before = site.works.length;
+        site.works = site.works.filter((item) => item.id !== id);
+        if (site.works.length === before) throw new Error("사진을 찾을 수 없습니다.");
+        await saveSite(site, "효성집수리 시공 사진 삭제");
+        return { ok: true, github: { ok: true, siteUrl: SITE_URL } };
+      }
     }
 
     throw new Error("요청에 실패했습니다.");

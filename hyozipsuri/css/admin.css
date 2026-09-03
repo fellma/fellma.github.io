@@ -602,6 +602,44 @@ textarea {
   font-size: 0.92rem;
 }
 
+.works-admin-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.works-admin-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #efe4d6;
+  aspect-ratio: 4 / 3;
+}
+
+.works-admin-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.works-admin-item .mini {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 251, 246, 0.94);
+}
+
+.works-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+}
+
 @media (max-width: 759px) {
   input,
   textarea,
