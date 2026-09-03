@@ -133,7 +133,7 @@ async function loadSite() {
     const res = await fetch("/api/site");
     if (res.ok) return { data: await res.json(), staticPage: false };
   } catch (_err) {}
-  const res = await fetch("site.json");
+  const res = await fetch("site.json", { cache: "no-store" });
   if (!res.ok) throw new Error("site");
   return { data: await res.json(), staticPage: true };
 }
