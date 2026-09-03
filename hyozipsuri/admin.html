@@ -109,9 +109,9 @@
 
         <h2>홈페이지 시공 사진</h2>
         <div class="card-form">
-          <p class="hint">2~4장 정도 올리면, 블로그 버튼 위에 슬라이드로 보입니다. 최대 8장입니다.</p>
+          <p class="hint">여러 장을 한 번에 고를 수 있습니다. 큰 사진은 자동으로 줄여서 올립니다. 최대 8장입니다.</p>
           <div id="worksAdminList" class="works-admin-list"></div>
-          <input type="file" id="worksPicker" accept="image/*" hidden />
+          <input type="file" id="worksPicker" accept="image/*" multiple hidden />
           <button type="button" id="worksAddBtn" class="btn">사진 추가</button>
           <p id="worksOk" class="ok" hidden></p>
         </div>
@@ -155,6 +155,7 @@
     </div>
 
     <script src="js/rich-text.js"></script>
+    <script src="js/image-prep.js"></script>
     <script src="js/visit-stats.js"></script>
     <script src="js/github-admin.js"></script>
     <script src="js/admin.js"></script>

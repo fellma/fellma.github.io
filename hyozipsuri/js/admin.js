@@ -50,7 +50,19 @@ function isSafeSrc(src) {
 }
 
 function assetUrl(src) {
-  return String(src || "").replace(/^\//, "");
+  const path = String(src || "").replace(/^\//, "");
+  if (window.HyoRemote && HyoRemote.useGithub() && typeof HyoRemote.mediaUrl === "function") {
+    return HyoRemote.mediaUrl(path);
+  }
+  return path;
+}
+
+async function shrinkFiles(files) {
+  const list = [...files].filter((file) => file && file.size);
+  if (!window.HyoImage) return list;
+  const out = [];
+  for (const file of list) out.push(await HyoImage.toFile(file));
+  return out;
 }
 
 function parseBlocks(body) {
@@ -249,7 +261,7 @@ function deleteBlock(index) {
 
 async function uploadImages(files) {
   const data = new FormData();
-  for (const file of files) data.append("images", file);
+  for (const file of await shrinkFiles(files)) data.append("images", file);
   const result = await api("/api/upload", { method: "POST", body: data });
   return result.urls || [];
 }
@@ -642,7 +654,10 @@ settingsForm.addEventListener("submit", async (event) => {
   data.append("area", settingsForm.area.value);
   data.append("blogCta", settingsForm.blogCta.value);
   data.append("blogUrl", settingsForm.blogUrl.value);
-  if (settingsForm.photo.files[0]) data.append("photo", settingsForm.photo.files[0]);
+  if (settingsForm.photo.files[0]) {
+    const photo = (await shrinkFiles([settingsForm.photo.files[0]]))[0];
+    data.append("photo", photo);
+  }
   const saved = await api("/api/settings", { method: "PUT", body: data });
   await refresh();
   showGithubResult(ok, saved.github, "명함을 저장했습니다.");
@@ -653,21 +668,29 @@ document.getElementById("worksAddBtn").addEventListener("click", () => {
 });
 
 document.getElementById("worksPicker").addEventListener("change", async (event) => {
-  const file = event.target.files && event.target.files[0];
+  const files = [...(event.target.files || [])];
   event.target.value = "";
   const ok = document.getElementById("worksOk");
+  const btn = document.getElementById("worksAddBtn");
   ok.hidden = true;
-  if (!file) return;
-  const data = new FormData();
-  data.append("image", file);
+  if (!files.length) return;
+  btn.disabled = true;
+  btn.textContent = "사진 줄여서 올리는 중…";
   try {
+    const prepared = await shrinkFiles(files);
+    const data = new FormData();
+    for (const file of prepared) data.append("images", file);
     const saved = await api("/api/works", { method: "POST", body: data });
     await refresh();
-    showGithubResult(ok, saved.github, "시공 사진을 올렸습니다.");
+    const count = saved.items ? saved.items.length : 1;
+    showGithubResult(ok, saved.github, `시공 사진 ${count}장을 올렸습니다.`);
   } catch (err) {
     ok.hidden = false;
     ok.className = "error";
     ok.textContent = err.message || "사진을 올리지 못했습니다.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "사진 추가";
   }
 });
 

@@ -95,18 +95,39 @@ window.HyoRemote = (function () {
     return `${dir}/${String(rel).replace(/^\/+/, "")}`.replace(/\/{2,}/g, "/");
   }
 
-  async function githubPut(relPath, bytes, message, retried) {
+  function contentsUrl(relPath) {
+    return `https://api.github.com/repos/${vault.repo}/contents/${filePath(relPath)}`;
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function isShaConflict(status, message) {
+    return status === 409 || status === 422 || /does not match|sha/i.test(String(message || ""));
+  }
+
+  async function githubGetFile(relPath) {
     requireToken();
     if (!vault || !vault.repo) throw new Error("이 페이지에서 저장할 수 있는 설정이 없습니다.");
-    const apiUrl = `https://api.github.com/repos/${vault.repo}/contents/${filePath(relPath)}`;
     const branch = vault.branch || "main";
-    let sha;
-    const existing = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, { headers: ghHeaders() });
-    if (existing.ok) {
-      const json = await existing.json();
-      sha = json.sha;
-    }
-    const res = await fetch(apiUrl, {
+    const res = await fetch(`${contentsUrl(relPath)}?ref=${encodeURIComponent(branch)}`, {
+      headers: ghHeaders(),
+      cache: "no-store",
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("GitHub에서 파일을 읽지 못했습니다.");
+    return res.json();
+  }
+
+  async function githubPut(relPath, bytes, message, attempt) {
+    requireToken();
+    if (!vault || !vault.repo) throw new Error("이 페이지에서 저장할 수 있는 설정이 없습니다.");
+    const tryNo = Number(attempt) || 0;
+    const branch = vault.branch || "main";
+    const existing = await githubGetFile(relPath);
+    const sha = existing && !Array.isArray(existing) ? existing.sha : undefined;
+    const res = await fetch(contentsUrl(relPath), {
       method: "PUT",
       headers: { ...ghHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -116,30 +137,72 @@ window.HyoRemote = (function () {
         sha,
       }),
     });
-    if (res.status === 409 && !retried) {
-      return githubPut(relPath, bytes, message, true);
-    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+      const conflict = isShaConflict(res.status, err.message);
+      if (conflict && relPath !== "site.json" && tryNo < 5) {
+        await sleep(400 * (tryNo + 1));
+        return githubPut(relPath, bytes, message, tryNo + 1);
+      }
+      if (conflict) {
+        throw new Error("저장이 겹쳤습니다. 잠시 후 다시 저장해 주세요.");
+      }
       throw new Error(err.message || "GitHub 저장에 실패했습니다.");
     }
     return res.json();
   }
 
+  function normalizeSite(data) {
+    const site = data && typeof data === "object" ? data : {};
+    site.settings = site.settings || {};
+    if (!Array.isArray(site.notices)) site.notices = [];
+    if (!Array.isArray(site.works)) site.works = [];
+    return site;
+  }
+
   async function loadSite() {
-    if (siteCache) return siteCache;
+    const file = await githubGetFile("site.json");
+    if (file && file.content) {
+      const text = new TextDecoder().decode(b64ToBytes(String(file.content).replace(/\s/g, "")));
+      siteCache = normalizeSite(JSON.parse(text));
+      return siteCache;
+    }
     const res = await fetch("site.json", { cache: "no-store" });
     if (!res.ok) throw new Error("내용을 불러오지 못했습니다.");
-    siteCache = await res.json();
-    siteCache.settings = siteCache.settings || {};
-    if (!Array.isArray(siteCache.notices)) siteCache.notices = [];
-    if (!Array.isArray(siteCache.works)) siteCache.works = [];
+    siteCache = normalizeSite(await res.json());
     return siteCache;
   }
 
   async function saveSite(site, message) {
     await githubPut("site.json", JSON.stringify(site, null, 2), message);
     siteCache = site;
+  }
+
+  async function mutateSite(mutator, message) {
+    let lastErr;
+    for (let i = 0; i < 5; i += 1) {
+      const site = await loadSite();
+      await mutator(site);
+      try {
+        await saveSite(site, message);
+        return site;
+      } catch (err) {
+        lastErr = err;
+        if (!/겹쳤|match|sha/i.test(String(err.message || "")) || i === 4) throw err;
+        await sleep(400 * (i + 1));
+      }
+    }
+    throw lastErr;
+  }
+
+  function mediaUrl(src) {
+    const path = String(src || "").replace(/^\//, "");
+    if (!path) return "";
+    if (mode === "github" && vault && vault.repo && (path.startsWith("uploads/") || path.startsWith("images/"))) {
+      const branch = vault.branch || "main";
+      return `https://raw.githubusercontent.com/${vault.repo}/${branch}/${filePath(path)}`;
+    }
+    return path;
   }
 
   function formValue(body, key) {
@@ -166,29 +229,14 @@ window.HyoRemote = (function () {
   }
 
   async function prepareImage(file) {
-    try {
-      const bitmap = await createImageBitmap(file);
-      const max = 1600;
-      let { width, height } = bitmap;
-      const scale = Math.min(1, max / Math.max(width, height));
-      width = Math.max(1, Math.round(width * scale));
-      height = Math.max(1, Math.round(height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(bitmap, 0, 0, width, height);
-      bitmap.close();
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
-      if (blob) return { bytes: await blob.arrayBuffer(), ext: ".jpg" };
-    } catch (_err) {}
+    if (window.HyoImage) return HyoImage.prepare(file, 1400);
     return { bytes: await file.arrayBuffer(), ext: extOf(file) };
   }
 
   async function uploadOne(file) {
     if (!file || !file.size) throw new Error("이미지 파일을 올려 주세요.");
     const prepared = await prepareImage(file);
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${prepared.ext}`;
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${prepared.ext || ".jpg"}`;
     const rel = `uploads/${name}`;
     await githubPut(rel, prepared.bytes, "효성집수리 사진 추가");
     return `/${rel}`;
@@ -310,23 +358,36 @@ window.HyoRemote = (function () {
     const worksMatch = url.match(/^\/api\/works(?:\/([^/?]+))?$/);
     if (worksMatch) {
       requireToken();
-      const site = await loadSite();
-      if (!Array.isArray(site.works)) site.works = [];
       const id = worksMatch[1];
       if (method === "POST") {
-        const file = body instanceof FormData ? body.get("image") : null;
-        if (!file || !file.size) throw new Error("사진을 올려 주세요.");
-        if (site.works.length >= 8) throw new Error("시공 사진은 최대 8장까지 올릴 수 있습니다.");
-        const item = { id: newId("w"), src: await uploadOne(file) };
-        site.works.push(item);
-        await saveSite(site, "효성집수리 시공 사진 추가");
-        return { ...item, github: { ok: true, siteUrl: SITE_URL } };
+        const files = body instanceof FormData
+          ? [...body.getAll("images"), body.get("image")].filter((file) => file && file.size)
+          : [];
+        if (!files.length) throw new Error("사진을 올려 주세요.");
+        const current = await loadSite();
+        if ((current.works || []).length >= 8) throw new Error("시공 사진은 최대 8장까지 올릴 수 있습니다.");
+        const room = 8 - (current.works || []).length;
+        const picked = files.slice(0, room);
+        const items = [];
+        for (const file of picked) {
+          items.push({ id: newId("w"), src: await uploadOne(file) });
+        }
+        await mutateSite((site) => {
+          site.works = Array.isArray(site.works) ? site.works : [];
+          for (const item of items) {
+            if (site.works.length >= 8) break;
+            if (!site.works.some((work) => work.src === item.src)) site.works.push(item);
+          }
+        }, "효성집수리 시공 사진 추가");
+        return { items, github: { ok: true, siteUrl: SITE_URL } };
       }
       if (method === "DELETE" && id) {
-        const before = site.works.length;
-        site.works = site.works.filter((item) => item.id !== id);
-        if (site.works.length === before) throw new Error("사진을 찾을 수 없습니다.");
-        await saveSite(site, "효성집수리 시공 사진 삭제");
+        await mutateSite((site) => {
+          site.works = Array.isArray(site.works) ? site.works : [];
+          const before = site.works.length;
+          site.works = site.works.filter((item) => item.id !== id);
+          if (site.works.length === before) throw new Error("사진을 찾을 수 없습니다.");
+        }, "효성집수리 시공 사진 삭제");
         return { ok: true, github: { ok: true, siteUrl: SITE_URL } };
       }
     }
@@ -334,5 +395,5 @@ window.HyoRemote = (function () {
     throw new Error("요청에 실패했습니다.");
   }
 
-  return { detect, useGithub, api };
+  return { detect, useGithub, api, mediaUrl };
 })();
