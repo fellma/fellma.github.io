@@ -331,27 +331,26 @@ window.HyoRemote = (function () {
 
     if (url === "/api/settings" && method === "PUT") {
       requireToken();
-      const site = await loadSite();
-      const next = {
-        ...site.settings,
-        companyName: String(formValue(body, "companyName") || "").trim() || site.settings.companyName,
-        ownerName: String(formValue(body, "ownerName") ?? site.settings.ownerName ?? "").trim(),
-        ownerTitle: String(formValue(body, "ownerTitle") ?? site.settings.ownerTitle ?? "").trim(),
-        cardHeadline: String(formValue(body, "cardHeadline") ?? site.settings.cardHeadline ?? "").trim(),
-        cardTagline: String(formValue(body, "cardTagline") ?? site.settings.cardTagline ?? "").trim(),
-        cardIntro: String(formValue(body, "cardIntro") ?? site.settings.cardIntro ?? "").trim(),
-        phone: String(formValue(body, "phone") || "").trim(),
-        area: String(formValue(body, "area") || "").trim(),
-        hours: formValue(body, "hours") == null ? site.settings.hours || "" : String(formValue(body, "hours") || "").trim(),
-        blogUrl: formValue(body, "blogUrl") == null ? site.settings.blogUrl || "" : String(formValue(body, "blogUrl") || "").trim(),
-        blogCta: formValue(body, "blogCta") == null ? site.settings.blogCta || "" : String(formValue(body, "blogCta") || "").trim(),
-      };
-      site.settings = next;
+      let photoUrl = "";
       const photo = body instanceof FormData ? body.get("photo") : null;
-      if (photo && photo.size) {
-        site.settings.photo = await uploadOne(photo);
-      }
-      await saveSite(site, "효성집수리 명함 수정");
+      if (photo && photo.size) photoUrl = await uploadOne(photo);
+      const site = await mutateSite((next) => {
+        next.settings = {
+          ...next.settings,
+          companyName: String(formValue(body, "companyName") || "").trim() || next.settings.companyName,
+          ownerName: String(formValue(body, "ownerName") ?? next.settings.ownerName ?? "").trim(),
+          ownerTitle: String(formValue(body, "ownerTitle") ?? next.settings.ownerTitle ?? "").trim(),
+          cardHeadline: String(formValue(body, "cardHeadline") ?? next.settings.cardHeadline ?? "").trim(),
+          cardTagline: String(formValue(body, "cardTagline") ?? next.settings.cardTagline ?? "").trim(),
+          cardIntro: String(formValue(body, "cardIntro") ?? next.settings.cardIntro ?? "").trim(),
+          phone: String(formValue(body, "phone") || "").trim(),
+          area: String(formValue(body, "area") || "").trim(),
+          hours: formValue(body, "hours") == null ? next.settings.hours || "" : String(formValue(body, "hours") || "").trim(),
+          blogUrl: formValue(body, "blogUrl") == null ? next.settings.blogUrl || "" : String(formValue(body, "blogUrl") || "").trim(),
+          blogCta: formValue(body, "blogCta") == null ? next.settings.blogCta || "" : String(formValue(body, "blogCta") || "").trim(),
+        };
+        if (photoUrl) next.settings.photo = photoUrl;
+      }, "효성집수리 명함 수정");
       return { ...site.settings, github: { ok: true, siteUrl: SITE_URL } };
     }
 

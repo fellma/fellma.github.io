@@ -663,34 +663,34 @@ settingsForm.addEventListener("submit", async (event) => {
   showGithubResult(ok, saved.github, "명함을 저장했습니다.");
 });
 
-document.getElementById("worksAddBtn").addEventListener("click", () => {
-  document.getElementById("worksPicker").click();
-});
-
 document.getElementById("worksPicker").addEventListener("change", async (event) => {
   const files = [...(event.target.files || [])];
   event.target.value = "";
   const ok = document.getElementById("worksOk");
   const btn = document.getElementById("worksAddBtn");
+  const label = document.getElementById("worksAddLabel");
+  const picker = event.target;
   ok.hidden = true;
   if (!files.length) return;
-  btn.disabled = true;
-  btn.textContent = "사진 줄여서 올리는 중…";
+  picker.disabled = true;
+  btn.classList.add("is-busy");
+  if (label) label.textContent = "사진 줄여서 올리는 중…";
   try {
     const prepared = await shrinkFiles(files);
     const data = new FormData();
     for (const file of prepared) data.append("images", file);
     const saved = await api("/api/works", { method: "POST", body: data });
     await refresh();
-    const count = saved.items ? saved.items.length : 1;
+    const count = saved.items ? saved.items.length : files.length;
     showGithubResult(ok, saved.github, `시공 사진 ${count}장을 올렸습니다.`);
   } catch (err) {
     ok.hidden = false;
     ok.className = "error";
     ok.textContent = err.message || "사진을 올리지 못했습니다.";
   } finally {
-    btn.disabled = false;
-    btn.textContent = "사진 추가";
+    picker.disabled = false;
+    btn.classList.remove("is-busy");
+    if (label) label.textContent = "사진 여러 장 고르기";
   }
 });
 
