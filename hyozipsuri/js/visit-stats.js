@@ -185,11 +185,17 @@ window.HyoVisit = (function () {
     });
     const unique = [...new Set(keys)];
     const values = {};
-    await Promise.all(
-      unique.map(async (key) => {
-        values[key] = await readCount(key);
-      })
-    );
+    for (let i = 0; i < unique.length; i += 8) {
+      const chunk = unique.slice(i, i + 8);
+      await Promise.all(
+        chunk.map(async (key) => {
+          values[key] = await readCount(key);
+        })
+      );
+      if (i + 8 < unique.length) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+    }
     return {
       today: values[`d-${today}`] || 0,
       yesterday: values[`d-${yesterday}`] || 0,
